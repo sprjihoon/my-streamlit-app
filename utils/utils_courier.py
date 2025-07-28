@@ -1,0 +1,71 @@
+import sqlite3
+import pandas as pd
+import streamlit as st
+from common import get_connection
+
+def add_courier_fee_by_zone(vendor: str, d_from: str, d_to: str) -> None:
+    """
+    공급처 + 날짜 기준으로 kpost_in에서 부피 → 사이즈 구간 매핑 후,
+    shipping_zone 요금표 적용하여 구간별 택배요금 항목을 session_state["items"]에 추가.
+    """
+    with get_connection() as con:
+        # ① 공급처의 rate_type 확인
+        cur = con.cursor()
+        cur.execute("SELECT rate_type FROM vendors WHERE vendor = ?", (vendor,))
+        row = cur.fetchone()
+        rate_type = row[0] if row else "STD"
+
+        # ② 별칭 목록 불러오기 (file_type = 'kpost_in')
+        alias_df = pd.read_sql(
+            "SELECT alias FROM aliases WHERE vendor = ? AND file_type = 'kpost_in'",
+            con, params=(vendor,)
+        )
+        name_list = [vendor] + alias_df["alias"].tolist()
+
+        # ③ kpost_in 에서 부피 데이터 추출
+        df_post = pd.read_sql(
+            f"""
+            SELECT 부피 FROM kpost_in
+            WHERE 발송인명 IN ({','.join('?' * len(name_list))})
+              AND 접수일자 BETWEEN ? AND ?
+            """, con, params=(*name_list, d_from, d_to)
+        )
+
+        if df_post.empty or "부피" not in df_post.columns:
+            return
+
+        df_post["부피"] = pd.to_numeric(df_post["부피"], errors="coerce")
+        df_post = df_post.dropna(subset=["부피"])
+
+        # ④ shipping_zone 테이블에서 해당 요금제 구간 불러오기
+        df_zone = pd.read_sql("SELECT * FROM shipping_zone WHERE 요금제 = ?", con, params=(rate_type,))
+        df_zone = df_zone.sort_values("len_min_cm")
+
+        # ⑤ 구간 매핑 및 수량 집계
+        size_counts = {}
+        for i, row in df_zone.iterrows():
+            min_len = row["len_min_cm"]
+            max_len = row["len_max_cm"]
+            label = row["구간"]
+            fee = row["요금"]
+
+            # 마지막 구간은 이상 이상으로 처리
+            if i < len(df_zone) - 1:
+                cond = (df_post["부피"] >= min_len) & (df_post["부피"] < max_len)
+            else:
+                cond = df_post["부피"] >= min_len
+
+            count = df_post[cond].shape[0]
+            if count > 0:
+                size_counts[label] = {"count": count, "fee": fee}
+
+        # ⑥ session_state["items"]에 추가
+        for label, info in size_counts.items():
+            qty = info["count"]
+            unit = info["fee"]
+            st.session_state["items"].append({
+                "항목": f"택배요금 ({label})",
+                "수량": qty,
+                "단가": unit,
+                "금액": qty * unit
+            })
