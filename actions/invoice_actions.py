@@ -55,7 +55,7 @@ def add_basic_shipping(df_items: pd.DataFrame,
         df_raw = pd.read_sql("SELECT * FROM shipping_stats", con)
         df_raw.columns = [c.strip() for c in df_raw.columns]
 
-        date_col = next((c for c in ["송장등록일","출고일자","기록일자","등록일자"]
+        date_col = next((c for c in ["배송일","송장등록일","출고일자","기록일자","등록일자"]
                          if c in df_raw.columns), None)
         if not date_col:
             raise KeyError("shipping_stats 날짜 컬럼 없음")
