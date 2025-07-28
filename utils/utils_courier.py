@@ -17,19 +17,20 @@ def add_courier_fee_by_zone(vendor: str, d_from: str, d_to: str) -> None:
 
         # ② 별칭 목록 불러오기 (file_type = 'kpost_in')
         alias_df = pd.read_sql(
-            "SELECT alias FROM aliases WHERE vendor = ? AND file_type = 'kpost_in'",
+            "SELECT alias FROM alias_vendor_v WHERE vendor = ?",
             con, params=(vendor,)
         )
-        name_list = [vendor] + alias_df["alias"].tolist()
+        name_list = [vendor] + alias_df["alias"].astype(str).str.strip().tolist()
 
         # ③ kpost_in 에서 부피 데이터 추출
         df_post = pd.read_sql(
             f"""
             SELECT 부피 FROM kpost_in
-            WHERE 발송인명 IN ({','.join('?' * len(name_list))})
+            WHERE TRIM(발송인명) IN ({','.join('?' * len(name_list))})
               AND 접수일자 BETWEEN ? AND ?
             """, con, params=(*name_list, d_from, d_to)
         )
+        # 발송인명 공백 제거 후 필터 누락 방지 완료
 
         if df_post.empty or "부피" not in df_post.columns:
             return
