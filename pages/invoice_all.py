@@ -85,7 +85,7 @@ if st.button("🚀 인보이스 일괄 생성 시작", type="primary"):
                     break
 
             # 2) 기본 출고비
-            df_basic = add_basic_shipping(df_ship, vendor, date_from, date_to)
+            df_basic = add_basic_shipping(pd.DataFrame(), vendor, date_from, date_to)
             st.session_state["items"].extend(df_basic.to_dict("records"))
 
             # 3) 기타 비용
