@@ -10,7 +10,7 @@ def shipping_stats(vendor: str, d_from: date, d_to: date, date_col: str = None) 
 
         # ────────── 날짜 컬럼 자동 감지 ──────────
         if not date_col:
-            preferred_cols = ["송장등록일", "출고일자", "기록일자", "등록일자"]
+            preferred_cols = ["배송일", "송장등록일", "출고일자", "기록일자", "등록일자"]
             date_col = next((col for col in preferred_cols if col in df.columns), None)
         if date_col not in df.columns:
             raise KeyError(f"❌ 날짜 컬럼 '{date_col}'이 shipping_stats에 없습니다.")
