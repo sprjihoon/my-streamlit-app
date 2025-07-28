@@ -98,9 +98,14 @@ df['period_from'] = pd.to_datetime(df['period_from']).dt.date
 
 # 기간(년‑월) 필터
 ym_opts = sorted(pd.to_datetime(df['period_from']).dt.strftime('%Y-%m').unique())
-def_ym = ym_opts[-1]
-sel_ym = st.selectbox("기간 (YYYY‑MM)", ym_opts, index=ym_opts.index(def_ym))
-mask = df['period_from'].apply(lambda d: d.strftime('%Y-%m')) == sel_ym
+ym_opts.insert(0, '전체')  # '전체' 옵션 추가
+def_ym = ym_opts[-1] if '전체' not in ym_opts[-1] else ym_opts[1]
+sel_ym = st.selectbox("기간 (YYYY-MM)", ym_opts, index=ym_opts.index(def_ym))
+# '전체' 선택 시 모든 행 포함
+if sel_ym == '전체':
+    mask = pd.Series(True, index=df.index)
+else:
+    mask = df['period_from'].apply(lambda d: d.strftime('%Y-%m')) == sel_ym
 
 # 업체·상태 필터
 col1, col2 = st.columns(2)
@@ -111,9 +116,14 @@ if ven_sel:
 if sta_sel:
     mask &= df['status'].isin(sta_sel)
 
+# ──────────────────────────────────────
+# 4-bis. 전체 선택 체크박스
+# ──────────────────────────────────────
+select_all = st.checkbox("✅ 전체 선택", key="inv_select_all")
+
 # 적용
 view_df = df.loc[mask].copy()
-view_df['선택'] = False
+view_df['선택'] = select_all
 view_df.set_index('invoice_id', inplace=True)
 
 st.markdown(f"📋 {len(view_df)}건 / 기간 {sel_ym} / 총 합계 ₩{int(view_df['total_amount'].sum()):,}")
@@ -217,6 +227,6 @@ def export_all_invoices() -> bytes:
 st.download_button(
     "📥 전체 인보이스 XLSX (필터 적용)",
     data=export_all_invoices(),
-    file_name=f"filtered_invoices_{sel_ym}.xlsx",
+    file_name=f"filtered_invoices_{sel_ym if sel_ym!='전체' else 'all'}.xlsx",
     mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 )
