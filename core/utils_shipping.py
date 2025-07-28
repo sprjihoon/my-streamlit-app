@@ -38,4 +38,12 @@ def shipping_stats(vendor: str, d_from: date, d_to: date, date_col: str = None) 
         df = df[df["공급처"].isin(name_list)]
         print("🏷️  공급처필터:", before, "→", len(df))
 
+        # 4) 중복 제거 – 동일 송장번호(트래킹) 행은 1건만 남김
+        for key in ("송장번호", "운송장번호", "TrackingNo", "tracking_no"):
+            if key in df.columns:
+                dedup_before = len(df)
+                df = df.drop_duplicates(subset=[key])
+                print("🔁 중복제거:", dedup_before, "→", len(df))
+                break
+
         return df.reset_index(drop=True)
