@@ -30,8 +30,8 @@ def add_remote_area_fee(vendor: str, d_from: str, d_to: str) -> None:
         return
 
     # 2025-07-28: 일부 파일은 도서행 표기가 누락되어 전체 건수를 사용
-    df["도서행"] = df["도서행"].astype(str).str.lower()
-    qty = df.shape[0]
+    df["도서행"] = df["도서행"].astype(str).str.lower().str.strip()
+    qty = df[df["도서행"] == "y"].shape[0]
 
     st.info(f"✅ {vendor} 도서산간 적용 수량: {qty}")
 
