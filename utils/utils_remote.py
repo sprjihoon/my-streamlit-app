@@ -11,10 +11,10 @@ def add_remote_area_fee(vendor: str, d_from: str, d_to: str) -> None:
     with get_connection() as con:
         # ① 공급처 + 별칭 목록
         alias_df = pd.read_sql(
-            "SELECT alias FROM aliases WHERE vendor = ? AND file_type = 'kpost_in'",
+            "SELECT alias FROM alias_vendor_v WHERE vendor = ?",
             con, params=(vendor,)
         )
-        name_list = [vendor] + alias_df["alias"].tolist()
+        name_list = [vendor] + alias_df["alias"].astype(str).str.strip().tolist()
 
         # ② kpost_in 필터 + 도서행 여부 확인
         df = pd.read_sql(
