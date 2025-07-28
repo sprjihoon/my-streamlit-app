@@ -20,7 +20,7 @@ def add_remote_area_fee(vendor: str, d_from: str, d_to: str) -> None:
         df = pd.read_sql(
             f"""
             SELECT 도서행 FROM kpost_in
-            WHERE 발송인명 IN ({','.join('?' * len(name_list))})
+            WHERE TRIM(발송인명) IN ({','.join('?' * len(name_list))})
               AND 접수일자 BETWEEN ? AND ?
             """, con, params=(*name_list, d_from, d_to)
         )
