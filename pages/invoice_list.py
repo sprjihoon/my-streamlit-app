@@ -117,29 +117,33 @@ if sta_sel:
     mask &= df['status'].isin(sta_sel)
 
 # ──────────────────────────────────────
-# 4-bis. 전체 선택 체크박스
+# 4-bis. 목록 표시 + 선택(내장) + 전체 선택 체크박스
 # ──────────────────────────────────────
 select_all = st.checkbox("✅ 전체 선택", key="inv_select_all")
 
-# 적용
-view_df = df.loc[mask].copy()
-view_df['선택'] = select_all
-view_df.set_index('invoice_id', inplace=True)
+# 보기용 DataFrame (편집 불필요→dataframe 사용)
+view_df = df.loc[mask].set_index('invoice_id').copy()
 
 st.markdown(f"📋 {len(view_df)}건 / 기간 {sel_ym} / 총 합계 ₩{int(view_df['total_amount'].sum()):,}")
 
-# ──────────────────────────────────────
-# 5. 목록 편집·삭제
-# ──────────────────────────────────────
-edit_df = st.data_editor(
+# Streamlit 1.35+ built-in row selection
+event = st.dataframe(
     view_df,
     use_container_width=True,
-    num_rows='dynamic',
     hide_index=False,
-    key='inv_table',
-    disabled=['업체', 'status', 'total_amount']
+    on_select="rerun",
+    selection_mode="multi-row",
+    key="inv_table"
 )
-selected_ids: List[int] = edit_df[edit_df['선택']].index.tolist()
+
+# 선택된 인보이스 ID 추출 (positional index → actual invoice_id)
+try:
+    selected_pos = event.selection.rows  # type: ignore[attr-defined]
+except AttributeError:
+    selected_pos = []
+
+selected_ids: List[int] = view_df.index.tolist() if select_all else [view_df.index[i] for i in selected_pos]
+
 if st.button("🗑 선택 삭제", disabled=not selected_ids):
     with sqlite3.connect(DB_PATH) as con:
         cur = con.cursor()
