@@ -97,6 +97,9 @@ def calculate_out_basic(
         with sqlite3.connect(db_path) as con:
             # ① 출고 건수 (공급처 + 날짜 필터)
             ship_df = pd.read_sql(f"SELECT 공급처, {date_col} FROM shipping_stats", con)
+            # 공급처 문자열 공백 제거 (정확도 ↑)
+            ship_df["공급처"] = ship_df["공급처"].astype(str).str.strip()
+
             alias_df = pd.read_sql(
                 "SELECT alias FROM alias_vendor_v WHERE vendor = ? AND file_type = 'shipping_stats'",
                 con,
