@@ -57,11 +57,11 @@ def add_courier_fee_by_zone(vendor: str, d_from: str, d_to: str) -> None:
             label = row["구간"]
             fee = row["요금"]
 
-            # 마지막 구간은 이상 이상으로 처리
-            if i < len(df_zone) - 1:
-                cond = (df_post["부피"] >= min_len) & (df_post["부피"] < max_len)
-            else:
+            # 마지막 구간은 하한 이상 전부 포함, 그 외 구간은 상한 포함 (≤ max)
+            if pd.isna(max_len) or i == len(df_zone) - 1:
                 cond = df_post["부피"] >= min_len
+            else:
+                cond = (df_post["부피"] >= min_len) & (df_post["부피"] <= max_len)
 
             count = df_post[cond].shape[0]
             if count > 0:
