@@ -136,14 +136,11 @@ refresh_alias_vendor_cache()  # ★ 새 업로드 반영
 st.cache_data.clear()
 a_cache = load_alias_cache()
 
-def uniq(tbl: str, col: str, ft: str):
-    """테이블/컬럼이 없거나 쿼리 오류 시 빈 리스트 반환하고 경고 표시"""
-    try:
-        df = pd.read_sql(f"SELECT DISTINCT [{col}] AS v FROM {tbl}", con)
-        return df["v"].dropna().astype(str).str.strip().tolist()
-    except Exception as e:
-        st.warning(f"{ft} 원본({tbl}.{col}) 읽기 실패 → {e}")
-        return []
+def uniq(tbl:str,col:str,ft:str)->List[str]:
+    with get_connection() as con:
+        df=pd.read_sql(f"SELECT DISTINCT [{col}] AS v FROM {tbl}",con)
+    df=df[~df.v.isin(a_cache[a_cache.file_type==ft].alias)]
+    return sorted(x for x in df.v.dropna().astype(str).str.strip() if x)
 
 opt = {ft: uniq(tbl,col,ft) for tbl,col,ft in SRC_TABLES}
 

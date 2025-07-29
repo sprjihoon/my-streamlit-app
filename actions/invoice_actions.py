@@ -149,16 +149,6 @@ def create_and_finalize_invoice(vendor_id: int,
     with get_connection() as con:
         cur = con.cursor()
 
-        # ── 이미 존재하면 삭제(UPERT) ──
-        old = cur.execute(
-            "SELECT invoice_id FROM invoices WHERE vendor_id=? AND period_from=? AND period_to=?",
-            (vendor_id, period_from, period_to),
-        ).fetchone()
-        if old:
-            old_id = old[0]
-            cur.execute("DELETE FROM invoice_items WHERE invoice_id=?", (old_id,))
-            cur.execute("DELETE FROM invoices WHERE invoice_id=?", (old_id,))
-
         # ── invoices 헤더 INSERT ──
         cur.execute(
             "INSERT INTO invoices "
