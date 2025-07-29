@@ -40,7 +40,7 @@ def add_courier_fee_by_zone(vendor: str, d_from: str, d_to: str) -> None:
         df_post["부피"] = pd.to_numeric(df_post["부피"], errors="coerce").fillna(0)
 
         # 중복 송장 제거 → shipping_stats와 동일 기준
-        for key_col in ("송장번호", "운송장번호", "TrackingNo", "tracking_no"):
+        for key_col in ("등기번호", "송장번호", "운송장번호", "TrackingNo", "tracking_no"):
             if key_col in df_post.columns:
                 df_post = df_post.drop_duplicates(subset=[key_col])
                 break
