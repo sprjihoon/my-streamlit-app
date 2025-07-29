@@ -23,13 +23,21 @@ def add_courier_fee_by_zone(vendor: str, d_from: str, d_to: str) -> None:
         name_list = [vendor] + alias_df["alias"].astype(str).str.strip().tolist()
 
         # ③ kpost_in 에서 부피 데이터 추출
+        # kpost_in 컬럼 목록 확인 후 식별자 컬럼 동적 선택
+        cols_in_db = pd.read_sql("PRAGMA table_info(kpost_in)", con)["name"].tolist()
+        id_candidates = ["등기번호", "송장번호", "운송장번호", "TrackingNo", "tracking_no"]
+        id_cols = [c for c in id_candidates if c in cols_in_db]
+        select_cols = ["부피"] + id_cols
+
         df_post = pd.read_sql(
             f"""
-            SELECT 부피, 송장번호, 운송장번호, TrackingNo, tracking_no
+            SELECT {', '.join(select_cols)}
             FROM kpost_in
             WHERE TRIM(발송인명) IN ({','.join('?' * len(name_list))})
               AND 접수일자 BETWEEN ? AND ?
-            """, con, params=(*name_list, d_from, d_to)
+            """,
+            con,
+            params=(*name_list, d_from, d_to)
         )
         # 발송인명 공백 제거 후 필터 누락 방지 완료
 
