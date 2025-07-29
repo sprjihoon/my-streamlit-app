@@ -1,4 +1,4 @@
-import sqlite3
+import sqlite3, logging, json
 import pandas as pd
 import streamlit as st
 from common import get_connection
@@ -53,7 +53,7 @@ def add_courier_fee_by_zone(vendor: str, d_from: str, d_to: str) -> None:
         df_zone = df_zone.sort_values("len_min_cm").reset_index(drop=True)
 
         # ⑤ 구간 매핑 및 수량 집계
-        size_counts = {}
+        size_counts: dict[str, dict] = {}
         for i, row in df_zone.iterrows():
             min_len = row["len_min_cm"]
             max_len = row["len_max_cm"]
@@ -69,6 +69,9 @@ def add_courier_fee_by_zone(vendor: str, d_from: str, d_to: str) -> None:
             count = df_post[cond].shape[0]
             if count > 0:
                 size_counts[label] = {"count": count, "fee": fee}
+
+        # 👉 디버그 로그 (터미널에 구간별 수량 표시)
+        logging.warning("📦 SIZE DEBUG %s → %s", vendor, json.dumps(size_counts, ensure_ascii=False))
 
         # ⑥ session_state["items"]에 추가
         for label, info in size_counts.items():
