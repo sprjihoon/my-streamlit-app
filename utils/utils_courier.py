@@ -25,7 +25,8 @@ def add_courier_fee_by_zone(vendor: str, d_from: str, d_to: str) -> None:
         # ③ kpost_in 에서 부피 데이터 추출
         df_post = pd.read_sql(
             f"""
-            SELECT 부피 FROM kpost_in
+            SELECT 부피, 송장번호, 운송장번호, TrackingNo, tracking_no
+            FROM kpost_in
             WHERE TRIM(발송인명) IN ({','.join('?' * len(name_list))})
               AND 접수일자 BETWEEN ? AND ?
             """, con, params=(*name_list, d_from, d_to)
