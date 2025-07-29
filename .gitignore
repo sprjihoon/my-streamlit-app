@@ -1,0 +1,4 @@
+
+# Ignore SQLite databases
+billing.db
+data/billing.db 
