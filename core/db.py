@@ -7,7 +7,7 @@ SQLite 연결 헬퍼.
 import sqlite3, os
 from contextlib import contextmanager
 
-DB_PATH = os.getenv("BILLING_DB", "billing.db")
+DB_PATH = os.getenv("BILLING_DB", "new_cal/data/billing.db")
 os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
 
 @contextmanager

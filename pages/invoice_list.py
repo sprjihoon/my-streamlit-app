@@ -126,19 +126,6 @@ view_df = df.loc[mask].set_index('invoice_id').copy()
 
 st.markdown(f"📋 {len(view_df)}건 / 기간 {sel_ym} / 총 합계 ₩{int(view_df['total_amount'].sum()):,}")
 
-# ──────────────────────────────────────
-# 🔥 전체 삭제 버튼 (필터링된 목록 전부)
-# ──────────────────────────────────────
-if not view_df.empty and st.button("🗑 전체 삭제 (필터 적용)", type="secondary"):
-    with sqlite3.connect(DB_PATH) as con:
-        cur = con.cursor()
-        cur.execute(f"DELETE FROM invoice_items WHERE invoice_id IN ({','.join(['?']*len(view_df))})", tuple(view_df.index))
-        cur.execute(f"DELETE FROM invoices      WHERE invoice_id IN ({','.join(['?']*len(view_df))})", tuple(view_df.index))
-        con.commit()
-    st.success(f"🗑 전체 {len(view_df)}건 삭제 완료")
-    st.cache_data.clear()
-    st.rerun()
-
 # Streamlit 1.35+ built-in row selection
 event = st.dataframe(
     view_df,
@@ -165,7 +152,6 @@ if st.button("🗑 선택 삭제", disabled=not selected_ids):
             cur.execute("DELETE FROM invoices WHERE invoice_id=?", (iid,))
         con.commit()
     st.success(f"🗑 {len(selected_ids)}건 삭제 완료")
-    st.cache_data.clear()  # 캐시된 인보이스 목록 무효화
     st.rerun()
 
 # ──────────────────────────────────────
